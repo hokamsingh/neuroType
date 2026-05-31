@@ -45,6 +45,18 @@ html, body {
   overflow: hidden;
 }
 
+@media (max-width: 640px) {
+  html, body {
+    overflow: auto;
+    height: auto;
+    min-height: 100dvh;
+  }
+  #app {
+    height: auto;
+    min-height: 100dvh;
+  }
+}
+
 /* ── Dot-grid atmosphere — dark only ────────────────── */
 [data-theme="dark"] body::before {
   content: '';

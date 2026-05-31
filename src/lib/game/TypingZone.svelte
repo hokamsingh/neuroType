@@ -136,6 +136,7 @@
 </div>
 
 <div class="typing-zone">
+  <div class="content-group">
   <!-- Layer label -->
   <div class="layer-label">
     L{layer.id} · {layer.name}
@@ -237,6 +238,8 @@
   {#if liftWarning}
     <div class="lift-warn" aria-live="assertive">anchor — keep fingers home</div>
   {/if}
+
+  </div><!-- end content-group -->
 
   <!-- Keyboard map (hidden in blind mode) -->
   <div class="keyboard-section">
@@ -547,5 +550,35 @@
     15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
     70%  { opacity: 1; }
     100% { opacity: 0; }
+  }
+
+  @media (max-width: 640px) {
+    .typing-zone {
+      padding: 52px 10px 12px;
+      gap: 0;
+      height: 100dvh;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+    .content-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .target-key { font-size: 56px; }
+    .target-wrap { width: 80px; height: 80px; }
+    .target-area { min-height: 100px; gap: 6px; }
+    .sequence-preview { max-width: 100%; }
+    .keyboard-section {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      overflow: hidden;
+      height: 150px;
+      flex-shrink: 0;
+    }
   }
 </style>

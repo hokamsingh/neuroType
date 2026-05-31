@@ -481,4 +481,19 @@
     font-family: 'JetBrains Mono', monospace;
     opacity: 0.4;
   }
+
+  @media (max-width: 640px) {
+    .result-screen {
+      padding: 52px 12px 32px;
+      overflow-y: auto;
+      height: auto;
+      min-height: 100dvh;
+      justify-content: flex-start;
+    }
+    .s-stat { padding: 10px 14px; }
+    .s-val { font-size: 22px; }
+    .rank-section { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .rank-bar, .rank-bar-labels { width: 100%; }
+    .btn-row { flex-wrap: wrap; }
+  }
 </style>

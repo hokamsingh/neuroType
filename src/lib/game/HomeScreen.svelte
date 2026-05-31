@@ -1011,4 +1011,36 @@
     from { border-color: #f8717166; }
     to   { border-color: #f87171cc; }
   }
+
+  @media (max-width: 640px) {
+    .home {
+      gap: 20px;
+      padding: 52px 12px 40px;
+      justify-content: flex-start;
+      overflow-y: auto;
+      min-height: 100dvh;
+      height: auto;
+    }
+    .home-header::before { width: 180px; height: 90px; }
+    .logo { font-size: 26px; }
+    .tagline { font-size: 11px; letter-spacing: 0.03em; }
+    .quick-controls { top: 8px; right: 8px; }
+    .qc-btn { width: 28px; height: 28px; font-size: 12px; }
+    .layer-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: 100%; }
+    .layer-card { padding: 12px; }
+    .layer-name { font-size: 12px; }
+    .stat-strip { flex-wrap: wrap; justify-content: center; gap: 6px; padding: 6px 10px; }
+    .sstat-dot { display: none; }
+    .bottom-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+    }
+    .key-nav-hints { display: none; }
+    .bottom-actions { flex-wrap: wrap; gap: 6px; }
+    .nav-btn, .full-reset-btn { font-size: 10px; padding: 4px 10px; }
+    .attribution { font-size: 9px; letter-spacing: 0.02em; }
+    .attr-stack { display: none; }
+  }
 </style>

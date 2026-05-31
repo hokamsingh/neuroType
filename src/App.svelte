@@ -34,10 +34,12 @@
   let fluidVariant   = loadProgress().settings.fluidBg ?? 'aurora'
   let userName       = loadProgress().settings.userName ?? ''
   let showWelcome    = !localStorage.getItem('neurotype:onboarded')
-  let showMobile     = (() => {
+  let isMobileDevice = (() => {
     const touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
     return touch && window.innerWidth < 768
   })()
+  let showMobile     = isMobileDevice
+  let showMobileBanner = false
 
   function saveName(name: string) {
     if (!name) return
@@ -202,8 +204,14 @@
     <AchievementToast ids={newAchievements} />
   {/if}
 
+  {#if isMobileDevice && showMobileBanner}
+    <div class="mobile-banner">
+      ⌨ physical keyboard required for the full experience — best on desktop
+    </div>
+  {/if}
+
   {#if showMobile}
-    <MobileModal on:tryAnyway={() => showMobile = false} />
+    <MobileModal on:tryAnyway={() => { showMobile = false; showMobileBanner = true }} />
   {/if}
 
   {#if showWelcome && !showMobile}
@@ -221,5 +229,29 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+  }
+
+  .mobile-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 150;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-align: center;
+    padding: 8px 16px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  @media (max-width: 640px) {
+    .app {
+      height: auto;
+      min-height: 100dvh;
+      overflow: visible;
+    }
   }
 </style>

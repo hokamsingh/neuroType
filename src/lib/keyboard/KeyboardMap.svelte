@@ -44,6 +44,7 @@
   }
 </script>
 
+<div class="kbd-outer">
 <div class="keyboard-wrap select-none" aria-hidden="true">
   {#each ['top','home','bottom'] as rowName}
     <div class="key-row" style="padding-left: {ROW_OFFSETS[rowName]}px">
@@ -65,8 +66,14 @@
     </div>
   </div>
 </div>
+</div>
 
 <style>
+  .kbd-outer {
+    display: flex;
+    justify-content: center;
+  }
+
   .keyboard-wrap {
     display: flex;
     flex-direction: column;
@@ -122,5 +129,12 @@
     0%, 100% { transform: translateX(0); }
     33%       { transform: translateX(-2px); }
     66%       { transform: translateX(2px); }
+  }
+
+  @media (max-width: 640px) {
+    .keyboard-wrap {
+      transform: scale(0.72);
+      transform-origin: top center;
+    }
   }
 </style>
