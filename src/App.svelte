@@ -118,6 +118,8 @@
       on:settings={() => screen = 'settings'}
       on:speedburst={() => { activeLayerId = 7; screen = 'burst' }}
       on:race={() => screen = 'race'}
+      on:themeChange={(e) => document.documentElement.setAttribute('data-theme', e.detail)}
+      on:fluidChange={(e) => { fluidVariant = e.detail }}
     />
 
   {:else if screen === 'lesson' && activeLayer}

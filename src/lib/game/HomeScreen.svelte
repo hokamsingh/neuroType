@@ -1,14 +1,42 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { LAYERS } from '../lessons/patterns'
-  import { loadProgress, resetLayerScores, resetLayerFull, resetProgress, getWeakKeys } from '../lessons/progress'
+  import { loadProgress, saveSettings, resetLayerScores, resetLayerFull, resetProgress, getWeakKeys } from '../lessons/progress'
   import { getRank, getNextRank, rankProgress } from '../ranks/chess'
+  import type { FluidBg } from '../lessons/progress'
 
   import { onMount, onDestroy } from 'svelte'
 
-  const dispatch = createEventDispatcher<{ start: number; stats: void; settings: void; speedburst: void; race: void }>()
+  const dispatch = createEventDispatcher<{ start: number; stats: void; settings: void; speedburst: void; race: void; themeChange: 'dark'|'light'; fluidChange: FluidBg }>()
 
   let progress = loadProgress()
+  let currentTheme: 'dark'|'light' = progress.settings.theme ?? 'light'
+  let currentFluid: FluidBg = progress.settings.fluidBg ?? 'aurora'
+
+  const FLUID_OPTS: FluidBg[] = ['aurora','metal','topo','silk','blobs','wireframe','smoke','grain','particles','fog','off']
+  const FLUID_ICONS: Record<FluidBg, string> = {
+    aurora:'✦', metal:'⬡', topo:'⌇', silk:'≋', blobs:'◉',
+    wireframe:'⊞', smoke:'≈', grain:'⁘', particles:'⁺', fog:'░', off:'○'
+  }
+
+  function quickToggleTheme() {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark'
+    const s = loadProgress().settings
+    s.theme = currentTheme
+    saveSettings(s)
+    document.documentElement.setAttribute('data-theme', currentTheme)
+    dispatch('themeChange', currentTheme)
+  }
+
+  function quickCycleFluid() {
+    const idx = FLUID_OPTS.indexOf(currentFluid)
+    currentFluid = FLUID_OPTS[(idx + 1) % FLUID_OPTS.length]
+    const s = loadProgress().settings
+    s.fluidBg = currentFluid
+    saveSettings(s)
+    dispatch('fluidChange', currentFluid)
+  }
+
   let hoveredLayer: number | null = null
   let resetMenuLayer: number | null = null
   let fullResetArmed = false
@@ -121,6 +149,16 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="home" on:click={closeMenus}>
+
+  <div class="quick-controls">
+    <button class="qc-btn" title="cycle background" on:click|stopPropagation={quickCycleFluid}>
+      {FLUID_ICONS[currentFluid]}
+    </button>
+    <button class="qc-btn" title="toggle theme" on:click|stopPropagation={quickToggleTheme}>
+      {currentTheme === 'dark' ? '☾' : '☀'}
+    </button>
+  </div>
+
   <header class="home-header">
     <h1 class="logo" aria-label="neuroType">
       {#each logoLetters as letter, i}
@@ -317,6 +355,38 @@
     gap: 40px;
     height: 100%;
     padding: 40px;
+    position: relative;
+  }
+
+  .quick-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+  }
+
+  .qc-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .qc-btn:hover {
+    color: var(--text);
+    border-color: var(--muted);
+    background: var(--bg);
   }
 
   .home-header {
