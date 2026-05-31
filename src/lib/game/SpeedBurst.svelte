@@ -8,6 +8,7 @@
   import { loadProgress, getWeakKeys } from '../lessons/progress'
 
   const dispatch = createEventDispatcher<{ done: RoundResult; home: void }>()
+  export let isMobile: boolean = false
 
   const DURATION = 10  // seconds
   let timeLeft = DURATION
@@ -67,7 +68,33 @@
     }
   }
 
-  onMount(() => window.addEventListener('keydown', onKeyDown))
+  // Mobile soft-keyboard
+  let hiddenInput: HTMLInputElement | null = null
+  let mobileKbActive = false
+
+  function activateMobileKb() {
+    hiddenInput?.focus()
+    mobileKbActive = !!document.activeElement && document.activeElement === hiddenInput
+  }
+
+  function onMobileInput(e: Event) {
+    const input = e.target as HTMLInputElement
+    const val = input.value
+    if (!val) return
+    const char = val[val.length - 1]
+    input.value = ''
+    onKeyDown(new KeyboardEvent('keydown', { key: char, bubbles: true }))
+  }
+
+  function onMobileBlur() { mobileKbActive = false }
+
+  onMount(() => {
+    window.addEventListener('keydown', onKeyDown)
+    if (isMobile) setTimeout(() => {
+      hiddenInput?.focus()
+      mobileKbActive = !!document.activeElement && document.activeElement === hiddenInput
+    }, 100)
+  })
   onDestroy(() => {
     window.removeEventListener('keydown', onKeyDown)
     clearInterval(timer)
@@ -76,6 +103,22 @@
   $: timerColor = timeLeft <= 3 ? '#f87171' : timeLeft <= 5 ? '#f97316' : '#e2e8f0'
   $: timerPct   = (timeLeft / DURATION) * 100
 </script>
+
+{#if isMobile}
+  <!-- svelte-ignore a11y-autofocus -->
+  <input
+    bind:this={hiddenInput}
+    class="hidden-kbd-input"
+    type="text"
+    inputmode="text"
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck={false}
+    on:input={onMobileInput}
+    on:blur={onMobileBlur}
+  />
+{/if}
 
 <!-- Timer bar -->
 <div class="burst-bar">
@@ -126,10 +169,26 @@
   </div>
 
   <div class="keyboard-section">
+    {#if isMobile}
+      <div class="mobile-controls">
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div class="mobile-back-btn" on:click={() => dispatch('home')}>← home</div>
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div class="mobile-kbd-btn" class:active={mobileKbActive} on:click={activateMobileKb}>
+          {mobileKbActive ? '⌨ keyboard active' : '⌨ tap to type'}
+        </div>
+      </div>
+    {:else}
+      <div class="burst-hint"><kbd>esc</kbd> home</div>
+    {/if}
     <KeyboardMap activeKey={currentKey} {flashKey} {flashCorrect} highlightFinger={currentKeyDef?.finger ?? null} />
   </div>
 
-  <div class="burst-hint"><kbd>esc</kbd> home</div>
+  {#if !isMobile}
+    <div class="burst-hint"><kbd>esc</kbd> home</div>
+  {/if}
 </div>
 
 <style>
@@ -237,6 +296,68 @@
   .bchar-active { font-weight: 700; font-size: 20px; opacity: 1; color: var(--text); }
 
   .keyboard-section { margin-top: auto; }
+
+  .mobile-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    justify-content: center;
+  }
+
+  .mobile-back-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.75;
+  }
+
+  .mobile-kbd-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    border: 1px solid #fbbf2466;
+    border-radius: 8px;
+    padding: 8px 20px;
+    cursor: pointer;
+    background: var(--surface);
+    user-select: none;
+    box-shadow: 0 0 12px #fbbf2418;
+    transition: color 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .mobile-kbd-btn.active {
+    color: #fbbf24;
+    border-color: #fbbf24;
+    box-shadow: 0 0 16px #fbbf2430;
+  }
+
+  .hidden-kbd-input {
+    position: fixed;
+    top: -100px; left: 0;
+    width: 1px; height: 1px;
+    opacity: 0; pointer-events: none;
+    font-size: 16px;
+    border: none; outline: none;
+    background: transparent; color: transparent;
+  }
+
+  @media (max-width: 640px) {
+    .burst-zone {
+      padding: 52px 10px 12px;
+      height: 100dvh;
+      overflow: hidden;
+    }
+    .keyboard-section { margin-top: auto; }
+  }
 
   .burst-hint {
     font-size: 11px;

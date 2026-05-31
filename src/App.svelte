@@ -181,6 +181,7 @@
 
   {:else if screen === 'burst'}
     <SpeedBurst
+      isMobile={isMobileDevice}
       on:done={(e) => handleRoundDone(e.detail, { isSpeedBurst: true })}
       on:home={() => screen = 'home'}
     />
@@ -201,6 +202,7 @@
 
   {:else if screen === 'race'}
     <RaceScreen
+      isMobile={isMobileDevice}
       on:done={(e) => { screen = 'home' }}
       on:home={() => screen = 'home'}
     />

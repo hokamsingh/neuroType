@@ -191,12 +191,6 @@
   />
 {/if}
 
-{#if isMobile}
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <div class="mobile-back" on:click={() => dispatch('home')}>← home</div>
-{/if}
-
 <!-- Top progress bar -->
 <div class="progress-track">
   <div
@@ -314,14 +308,19 @@
   <!-- Keyboard map (hidden in blind mode) -->
   <div class="keyboard-section">
     {#if isMobile}
-      <!-- svelte-ignore a11y-click-events-have-key-events -->
-      <!-- svelte-ignore a11y-no-static-element-interactions -->
-      <div
-        class="tap-to-type"
-        class:tap-active={mobileKeyboardActive}
-        on:click={activateMobileKeyboard}
-      >
-        {mobileKeyboardActive ? '⌨ keyboard active' : '⌨ tap here to open keyboard'}
+      <div class="mobile-controls">
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div class="mobile-back-inline" on:click={() => dispatch('home')}>← home</div>
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div
+          class="tap-to-type"
+          class:tap-active={mobileKeyboardActive}
+          on:click={activateMobileKeyboard}
+        >
+          {mobileKeyboardActive ? '⌨ keyboard active' : '⌨ tap to type'}
+        </div>
       </div>
     {/if}
     {#if isBlind}
@@ -641,22 +640,27 @@
     100% { opacity: 0; }
   }
 
-  .mobile-back {
-    position: fixed;
-    top: 44px;
-    left: 12px;
-    z-index: 150;
+  .mobile-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mobile-back-inline {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 0.06em;
     color: var(--muted);
-    padding: 6px 10px;
+    padding: 8px 14px;
     border: 1px solid var(--border);
-    border-radius: 5px;
+    border-radius: 6px;
     background: var(--surface);
     cursor: pointer;
     user-select: none;
-    opacity: 0.7;
+    opacity: 0.75;
   }
 
   .hidden-kbd-input {
@@ -722,7 +726,7 @@
       align-items: center;
       width: 100%;
       overflow: hidden;
-      height: 185px;
+      height: 225px;
       flex-shrink: 0;
     }
   }

@@ -338,4 +338,8 @@
     color: var(--text);
     font-size: 11px;
   }
+
+  @media (max-width: 640px) {
+    .settings-screen { padding-top: 52px; overflow-y: auto; }
+  }
 </style>

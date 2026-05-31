@@ -5,6 +5,7 @@
   import { sounds } from '../audio/sounds'
 
   export let difficulty: Difficulty = 'medium'
+  export let isMobile: boolean = false
 
   const dispatch = createEventDispatcher<{
     done: { score: number; wpm: number; accuracy: number }
@@ -242,7 +243,34 @@
     }
   }
 
-  onMount(() => window.addEventListener('keydown', onKeyDown))
+  // Mobile soft-keyboard
+  let hiddenInput: HTMLInputElement | null = null
+  let mobileKbActive = false
+
+  function activateMobileKb() {
+    hiddenInput?.focus()
+    mobileKbActive = !!document.activeElement && document.activeElement === hiddenInput
+  }
+
+  function onMobileInput(e: Event) {
+    const input = e.target as HTMLInputElement
+    const val = input.value
+    if (!val) return
+    const char = val[val.length - 1]
+    input.value = ''
+    // Simulate keydown through the existing handler
+    onKeyDown(new KeyboardEvent('keydown', { key: char, bubbles: true }))
+  }
+
+  function onMobileBlur() { mobileKbActive = false }
+
+  onMount(() => {
+    window.addEventListener('keydown', onKeyDown)
+    if (isMobile) setTimeout(() => {
+      hiddenInput?.focus()
+      mobileKbActive = !!document.activeElement && document.activeElement === hiddenInput
+    }, 100)
+  })
   onDestroy(() => {
     window.removeEventListener('keydown', onKeyDown)
     clearInterval(spawnTimer)
@@ -272,6 +300,22 @@
   $: needle = angle(liveWpm)
   $: sc     = speedColor(liveWpm)
 </script>
+
+{#if isMobile}
+  <!-- svelte-ignore a11y-autofocus -->
+  <input
+    bind:this={hiddenInput}
+    class="hidden-kbd-input"
+    type="text"
+    inputmode="text"
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck={false}
+    on:input={onMobileInput}
+    on:blur={onMobileBlur}
+  />
+{/if}
 
 <!-- HUD -->
 <div class="hud">
@@ -374,8 +418,20 @@
 
 <!-- Active word strip at bottom -->
 {#if activeWord && started && !gameOver}
-  <div class="active-strip" class:wrong-flash={wrongFlash}>
-    <span class="as-typed">{activeWord.text.slice(0, activeWord.typed)}</span><span class="as-next">{activeWord.text[activeWord.typed] ?? ''}</span><span class="as-rest">{activeWord.text.slice(activeWord.typed + 1)}</span>
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div class="active-strip" class:wrong-flash={wrongFlash} on:click={isMobile ? activateMobileKb : undefined}>
+    {#if isMobile && !mobileKbActive}
+      <span class="race-tap-hint">⌨ tap to type</span>
+    {:else}
+      <span class="as-typed">{activeWord.text.slice(0, activeWord.typed)}</span><span class="as-next">{activeWord.text[activeWord.typed] ?? ''}</span><span class="as-rest">{activeWord.text.slice(activeWord.typed + 1)}</span>
+    {/if}
+  </div>
+{:else if isMobile && !started}
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div class="active-strip race-start-strip" on:click={activateMobileKb}>
+    {mobileKbActive ? '⌨ keyboard active — start typing' : '⌨ tap here then type to start'}
   </div>
 {/if}
 
@@ -816,6 +872,33 @@
   }
 
   .modal-actions { display: flex; gap: 10px; }
+
+  .hidden-kbd-input {
+    position: fixed;
+    top: -100px; left: 0;
+    width: 1px; height: 1px;
+    opacity: 0; pointer-events: none;
+    font-size: 16px;
+    border: none; outline: none;
+    background: transparent; color: transparent;
+  }
+
+  .race-tap-hint {
+    font-size: 14px;
+    color: #fbbf24;
+    letter-spacing: 0.06em;
+  }
+
+  .race-start-strip {
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 640px) {
+    .hud   { top: 36px; }
+    .arena { top: 92px; }
+  }
 
   .btn-resume, .btn-exit {
     font-family: 'JetBrains Mono', monospace;
