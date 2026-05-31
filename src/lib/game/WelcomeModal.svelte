@@ -51,7 +51,7 @@
     </button>
 
     <div class="signature">
-      — <a href="https://github.com/hokamsingh" target="_blank" rel="noopener">hokamsingh</a>
+      built for those who type with intent &mdash; <a href="https://github.com/hokamsingh" target="_blank" rel="noopener">hokamsingh</a>
     </div>
   </div>
 </div>
