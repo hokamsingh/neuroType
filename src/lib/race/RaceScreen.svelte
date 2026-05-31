@@ -23,21 +23,67 @@
   const wordQueue = makeWordQueue(difficulty)
 
   let words: FallingWord[]  = []
-  let idSeq       = 0
-  let hp          = 3
-  let score       = 0
-  let started     = false
-  let gameOver    = false
-  let paused      = false
+  let idSeq         = 0
+  let hp            = 3
+  let score         = 0
+  let started       = false
+  let gameOver      = false
+  let paused        = false
   let showQuitModal = false
-  let correctKeys = 0
-  let wrongKeys   = 0
-  let startTs     = 0
+  let showBreathe   = false
+  let correctKeys   = 0
+  let wrongKeys     = 0
+  let startTs       = 0
   let totalPausedMs = 0
   let pauseStartTs  = 0
-  let liveWpm     = 0
-  let wrongFlash  = false
+  let liveWpm       = 0
+  let wrongFlash    = false
 
+  // ── Rage ──────────────────────────────────────────────────
+  let rage          = 0   // 0–100
+  let shaking       = false
+
+  const BREATHE_MSGS = [
+    "hey. breathe. it's just a keyboard.",
+    "your keyboard didn't mean it.",
+    "inhale. exhale. try again.",
+    "slow down. you're doing fine.",
+    "the keys aren't judging you.",
+    "step back. reset. come back stronger.",
+  ]
+  let breatheMsg = BREATHE_MSGS[0]
+
+  function addRage(n: number) {
+    rage = Math.min(100, Math.max(0, rage + n))
+    if (rage >= 100 && !showBreathe && !showQuitModal) {
+      triggerBreathe()
+    } else if (rage >= 70 && !shaking) {
+      shaking = true
+      setTimeout(() => { shaking = false }, 500)
+    }
+  }
+
+  function triggerBreathe() {
+    breatheMsg = BREATHE_MSGS[Math.floor(Math.random() * BREATHE_MSGS.length)]
+    pauseGame()
+    showBreathe = true
+  }
+
+  function closeBreathe() {
+    showBreathe = false
+    rage = 30
+    resumeGame()
+  }
+
+  function restartFromBreathe() {
+    showBreathe = false
+    dispatch('home')
+  }
+
+  $: rageColor = rage < 40 ? '#34d399' : rage < 70 ? '#fbbf24' : rage < 90 ? '#f97316' : '#f87171'
+  $: rageLabel = rage < 40 ? 'chill' : rage < 70 ? 'tilting' : rage < 90 ? 'raging' : '🔥 MAX'
+
+  // ── Timers ─────────────────────────────────────────────────
   let spawnTimer: ReturnType<typeof setInterval>
   let wpmTimer  : ReturnType<typeof setInterval>
 
@@ -66,6 +112,7 @@
     words = words.filter(w => w.id !== id)
     hp--
     sounds.wrongKey()
+    addRage(20)
     if (hp <= 0) endGame()
   }
 
@@ -95,7 +142,7 @@
   }
 
   function pauseGame() {
-    if (!started || gameOver) return
+    if (!started || gameOver || paused) return
     paused = true
     pauseStartTs = Date.now()
     clearInterval(spawnTimer)
@@ -146,6 +193,10 @@
   })()
 
   function onKeyDown(e: KeyboardEvent) {
+    if (showBreathe) {
+      if (e.key === 'Escape') { e.preventDefault(); closeBreathe() }
+      return
+    }
     if (showQuitModal) {
       if (e.key === 'Escape') { e.preventDefault(); closeQuitModal() }
       return
@@ -165,6 +216,7 @@
     if (key === expected) {
       correctKeys++
       sounds.correctKey()
+      addRage(-1)
       const newTyped = activeWord.typed + 1
       const complete = newTyped >= activeWord.text.length
 
@@ -174,6 +226,7 @@
           words = words.filter(w => w.id !== activeWord!.id)
         }, 200)
         score++
+        addRage(-10)
         sounds.streak10()
       } else {
         words = words.map(w => w.id === activeWord!.id ? { ...w, typed: newTyped } : w)
@@ -181,6 +234,7 @@
     } else {
       wrongKeys++
       wrongFlash = true
+      addRage(8)
       setTimeout(() => { wrongFlash = false }, 160)
       sounds.wrongKey()
     }
@@ -230,6 +284,19 @@
     <span class="score-label">words</span>
   </div>
 
+  <!-- Rage meter -->
+  {#if started && !gameOver}
+    <div class="rage-wrap" title="rage meter">
+      <div class="rage-label" style="color:{rageColor}">{rageLabel}</div>
+      <div class="rage-track">
+        <div
+          class="rage-fill"
+          style="width:{rage}%; background:{rageColor}; box-shadow: 0 0 6px {rageColor}88"
+        ></div>
+      </div>
+    </div>
+  {/if}
+
   <!-- Speedometer SVG -->
   <div class="speedo-box">
     <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
@@ -260,8 +327,14 @@
 </div>
 
 <!-- Falling words arena -->
-<div class="arena" class:arena-paused={paused}>
+<div class="arena" class:arena-paused={paused} class:arena-shake={shaking}
+  style="--rage-tint: {rage > 60 ? Math.round((rage - 60) / 40 * 18) : 0}">
   <div class="deadline"></div>
+
+  <!-- red vignette at high rage -->
+  {#if rage > 60}
+    <div class="rage-vignette" style="opacity:{((rage - 60) / 40) * 0.35}"></div>
+  {/if}
 
   {#each words as word (word.id)}
     {@const isActive = activeWord?.id === word.id}
@@ -280,7 +353,7 @@
     <div class="start-msg">start typing to begin</div>
   {/if}
 
-  {#if paused}
+  {#if paused && !showBreathe}
     <div class="pause-overlay">
       <div class="pause-icon">⏸</div>
       <div class="pause-label">paused</div>
@@ -301,6 +374,21 @@
 {#if activeWord && started && !gameOver}
   <div class="active-strip" class:wrong-flash={wrongFlash}>
     <span class="as-typed">{activeWord.text.slice(0, activeWord.typed)}</span><span class="as-next">{activeWord.text[activeWord.typed] ?? ''}</span><span class="as-rest">{activeWord.text.slice(activeWord.typed + 1)}</span>
+  </div>
+{/if}
+
+<!-- Breathe modal -->
+{#if showBreathe}
+  <div class="breathe-backdrop">
+    <div class="breathe-modal">
+      <div class="breathe-circle"></div>
+      <div class="breathe-msg">{breatheMsg}</div>
+      <div class="breathe-hint">close your eyes. breathe in 4s, out 4s.</div>
+      <div class="breathe-actions">
+        <button class="btn-calm" on:click={closeBreathe}>i'm calm, resume</button>
+        <button class="btn-restart" on:click={restartFromBreathe}>just restart</button>
+      </div>
+    </div>
   </div>
 {/if}
 
@@ -330,6 +418,10 @@
         <div class="stat-row">
           <span class="stat-label">lives left</span>
           <span class="stat-val">{hp} / 3</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">rage</span>
+          <span class="stat-val" style="color:{rageColor}">{rage}%</span>
         </div>
       </div>
 
@@ -385,6 +477,38 @@
 
   .score-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
 
+  /* Rage meter */
+  .rage-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 80px;
+  }
+
+  .rage-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    transition: color 0.3s;
+  }
+
+  .rage-track {
+    width: 80px;
+    height: 4px;
+    background: var(--surface);
+    border-radius: 2px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .rage-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.2s ease, background 0.3s ease, box-shadow 0.3s ease;
+  }
+
   .speedo-box {
     width: 120px;
     margin-left: auto;
@@ -429,17 +553,34 @@
     overflow: hidden;
   }
 
+  .arena-paused .word { animation-play-state: paused; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    15%      { transform: translateX(-6px) rotate(-0.4deg); }
+    30%      { transform: translateX(6px) rotate(0.4deg); }
+    45%      { transform: translateX(-4px); }
+    60%      { transform: translateX(4px); }
+    75%      { transform: translateX(-2px); }
+  }
+
+  .arena-shake { animation: shake 0.5s ease both; }
+
+  .rage-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 40%, #f8717180 100%);
+    transition: opacity 0.4s ease;
+    z-index: 1;
+  }
+
   .deadline {
     position: absolute;
     bottom: 0; left: 0; right: 0;
     height: 1px;
     background: #f8717122;
     border-top: 1px dashed #f8717144;
-  }
-
-  /* Pause all falling animations */
-  .arena-paused .word {
-    animation-play-state: paused;
   }
 
   /* Falling words */
@@ -454,6 +595,7 @@
     pointer-events: none;
     user-select: none;
     animation: fall linear forwards;
+    z-index: 2;
   }
 
   .word.active { font-size: 21px; font-weight: 700; }
@@ -485,6 +627,7 @@
     gap: 8px;
     background: rgba(0,0,0,0.55);
     backdrop-filter: blur(3px);
+    z-index: 10;
   }
 
   .pause-icon  { font-size: 40px; color: #fbbf24; }
@@ -539,6 +682,88 @@
   .go-score  { font-size: 48px; font-weight: 700; color: var(--text); line-height: 1; }
   .go-label  { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
 
+  /* Breathe modal */
+  .breathe-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+  }
+
+  .breathe-modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 40px;
+  }
+
+  /* Breathing circle — 4s expand/contract cycle */
+  .breathe-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #60a5fa22;
+    border: 2px solid #60a5fa66;
+    animation: breathe-pulse 4s ease-in-out infinite;
+    box-shadow: 0 0 20px #60a5fa33;
+  }
+
+  @keyframes breathe-pulse {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 20px #60a5fa33; }
+    50%       { transform: scale(1.5); box-shadow: 0 0 40px #60a5fa66; }
+  }
+
+  .breathe-msg {
+    font-size: 16px;
+    color: var(--text);
+    text-align: center;
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  .breathe-hint {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+
+  .breathe-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .btn-calm, .btn-restart {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    border-radius: 5px;
+    padding: 8px 18px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity 0.15s;
+  }
+
+  .btn-calm {
+    background: #60a5fa18;
+    color: #60a5fa;
+    border: 1px solid #60a5fa40;
+  }
+
+  .btn-restart {
+    background: #f8717118;
+    color: #f87171;
+    border: 1px solid #f8717140;
+  }
+
+  .btn-calm:hover, .btn-restart:hover { opacity: 0.75; }
+
   /* Quit modal */
   .modal-backdrop {
     position: fixed;
@@ -571,11 +796,7 @@
     text-transform: uppercase;
   }
 
-  .modal-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
+  .modal-stats { display: flex; flex-direction: column; gap: 10px; }
 
   .stat-row {
     display: flex;
@@ -583,11 +804,7 @@
     align-items: baseline;
   }
 
-  .stat-label {
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 0.06em;
-  }
+  .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
 
   .stat-val {
     font-size: 22px;
@@ -596,10 +813,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .modal-actions {
-    display: flex;
-    gap: 10px;
-  }
+  .modal-actions { display: flex; gap: 10px; }
 
   .btn-resume, .btn-exit {
     font-family: 'JetBrains Mono', monospace;
