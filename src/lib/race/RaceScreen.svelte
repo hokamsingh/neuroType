@@ -55,9 +55,9 @@
 
   function addRage(n: number) {
     rage = Math.min(100, Math.max(0, rage + n))
-    if (rage >= 100 && !showBreathe && !showQuitModal) {
+    if (rage >= 70 && !showBreathe && !showQuitModal && !gameOver) {
       triggerBreathe()
-    } else if (rage >= 70 && !shaking) {
+    } else if (rage >= 50 && !shaking) {
       shaking = true
       setTimeout(() => { shaking = false }, 500)
     }
@@ -72,6 +72,7 @@
   function closeBreathe() {
     showBreathe = false
     rage = 30
+    if (hp <= 0) { endGame(); return }
     resumeGame()
   }
 
@@ -80,8 +81,8 @@
     dispatch('home')
   }
 
-  $: rageColor = rage < 40 ? '#34d399' : rage < 70 ? '#fbbf24' : rage < 90 ? '#f97316' : '#f87171'
-  $: rageLabel = rage < 40 ? 'chill' : rage < 70 ? 'tilting' : rage < 90 ? 'raging' : '🔥 MAX'
+  $: rageColor = rage < 30 ? '#34d399' : rage < 55 ? '#fbbf24' : rage < 70 ? '#f97316' : '#f87171'
+  $: rageLabel = rage < 30 ? 'chill' : rage < 55 ? 'tilting' : rage < 70 ? 'raging' : '🔥 MAX'
 
   // ── Timers ─────────────────────────────────────────────────
   let spawnTimer: ReturnType<typeof setInterval>
@@ -113,7 +114,8 @@
     hp--
     sounds.wrongKey()
     addRage(20)
-    if (hp <= 0) endGame()
+    // if breathe modal just triggered, don't end game — let user recover first
+    if (hp <= 0 && !showBreathe) endGame()
   }
 
   function startGame() {
