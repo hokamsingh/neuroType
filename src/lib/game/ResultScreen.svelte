@@ -9,6 +9,8 @@
   export let newRank: { piece: string; name: string; color: string } | null = null
   export let prevWpm: number = 0
   export let prevAcc: number = 0
+  export let userName: string = ''
+  export let wasDaily: boolean = false
 
   const dispatch = createEventDispatcher<{ retry: void; next: void; home: void }>()
 
@@ -70,6 +72,15 @@
       <div class="rank-name" style="color: {newRank.color}">{newRank.name}</div>
       <div class="rank-badge">rank unlocked</div>
     </div>
+  {/if}
+
+  <!-- Personalised greeting -->
+  {#if wasDaily}
+    <div class="personal-msg daily-msg">
+      📅 daily challenge complete{userName ? `, ${userName}` : ''}!
+    </div>
+  {:else if userName}
+    <div class="personal-msg">nice work, {userName}</div>
   {/if}
 
   <!-- Hero WPM -->
@@ -171,6 +182,22 @@
 </div>
 
 <style>
+  .personal-msg {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    font-style: italic;
+    animation: fade-up 0.4s ease both;
+  }
+
+  .daily-msg {
+    color: #fbbf24;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+  }
+
   .result-screen {
     display: flex;
     flex-direction: column;

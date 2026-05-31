@@ -1,7 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
 
-  const dispatch = createEventDispatcher<{ dismiss: void; daily: void; race: void }>()
+  const dispatch = createEventDispatcher<{ dismiss: string; daily: string; race: string }>()
+
+  let userName = ''
+  let inputFocused = false
 
   const features = [
     { icon: '⬆', name: '9 progressive layers',  desc: 'home row → free flow — unlock each by hitting the WPM target', cta: null },
@@ -12,11 +15,15 @@
     { icon: '⁘', name: 'fluid backgrounds',       desc: '10 animated styles — toggle theme + bg in the top-right',      cta: null },
   ]
 
-  function dismiss()    { dispatch('dismiss') }
-  function startDaily() { dispatch('daily') }
-  function startRace()  { dispatch('race') }
+  function dismiss()    { dispatch('dismiss', userName.trim()) }
+  function startDaily() { dispatch('daily',   userName.trim()) }
+  function startRace()  { dispatch('race',    userName.trim()) }
 
   function onKey(e: KeyboardEvent) {
+    if (inputFocused) {
+      if (e.key === 'Enter') { e.preventDefault(); dismiss() }
+      return
+    }
     if (e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') {
       e.preventDefault()
       dismiss()
@@ -34,6 +41,17 @@
     <div class="modal-header">
       <div class="modal-title">welcome to <span class="brand">neuroType</span></div>
       <div class="modal-sub">map keys to fingers. build muscle memory fast.</div>
+    </div>
+
+    <div class="name-row" on:click|stopPropagation>
+      <input
+        bind:value={userName}
+        placeholder="what should we call you? (optional)"
+        class="name-input"
+        maxlength="24"
+        on:focus={() => inputFocused = true}
+        on:blur={() => inputFocused = false}
+      />
     </div>
 
     <ul class="feature-list">
@@ -177,6 +195,33 @@
     font-size: 11px;
     color: var(--muted);
     line-height: 1.5;
+  }
+
+  .name-row {
+    width: 100%;
+  }
+
+  .name-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .name-input:focus {
+    border-color: var(--muted);
+  }
+
+  .name-input::placeholder {
+    color: var(--border);
+    font-style: italic;
   }
 
   .f-cta {

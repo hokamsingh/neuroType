@@ -9,6 +9,8 @@
 
   const dispatch = createEventDispatcher<{ start: number; daily: number; stats: void; settings: void; speedburst: void; race: void; themeChange: 'dark'|'light'; fluidChange: FluidBg }>()
 
+  export let userName: string = ''
+
   let progress = loadProgress()
   let currentTheme: 'dark'|'light' = progress.settings.theme ?? 'light'
   let currentFluid: FluidBg = progress.settings.fluidBg ?? 'aurora'
@@ -184,7 +186,9 @@
         >{letter}</span>
       {/each}
     </h1>
-    <div class="tagline">map keys to fingers. build muscle memory fast.</div>
+    <div class="tagline">
+      {#if userName}hey {userName} — {/if}map keys to fingers. build muscle memory fast.
+    </div>
     {#if progress.streak > 0}
       <div class="streak-badge">🔥 {progress.streak} day streak</div>
     {/if}

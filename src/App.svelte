@@ -29,8 +29,18 @@
   let newAchievements: string[] = []
   let isBlind        = false
   let isDailySession = false
+  let lastWasDaily   = false
   let fluidVariant   = loadProgress().settings.fluidBg ?? 'aurora'
+  let userName       = loadProgress().settings.userName ?? ''
   let showWelcome    = !localStorage.getItem('neurotype:onboarded')
+
+  function saveName(name: string) {
+    if (!name) return
+    userName = name
+    const p = loadProgress()
+    p.settings.userName = name
+    saveProgress(p)
+  }
 
   function getDailyLayerId(): number {
     const now = new Date()
@@ -104,6 +114,7 @@
     })
     if (newAchievements.length > 0) saveProgress(p)
 
+    lastWasDaily   = isDailySession
     isDailySession = false
     screen = 'result'
   }
@@ -128,6 +139,7 @@
 <div class="app">
   {#if screen === 'home'}
     <HomeScreen
+      {userName}
       on:start={(e) => startLesson(e.detail)}
       on:daily={(e) => startDailyChallenge(e.detail)}
       on:stats={() => screen = 'stats'}
@@ -160,6 +172,8 @@
       {newRank}
       {prevWpm}
       {prevAcc}
+      {userName}
+      wasDaily={lastWasDaily}
       on:retry={retry}
       on:next={nextDrill}
       on:home={() => screen = 'home'}
@@ -184,9 +198,9 @@
 
   {#if showWelcome}
     <WelcomeModal
-      on:dismiss={() => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1') }}
-      on:daily={() => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1'); startDailyChallenge() }}
-      on:race={() => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1'); screen = 'race' }}
+      on:dismiss={(e) => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1'); saveName(e.detail) }}
+      on:daily={(e)   => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1'); saveName(e.detail); startDailyChallenge() }}
+      on:race={(e)    => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1'); saveName(e.detail); screen = 'race' }}
     />
   {/if}
 </div>
