@@ -4,6 +4,8 @@ A fast, minimal typing trainer that maps keys to fingers and builds muscle memor
 
 ![Svelte](https://img.shields.io/badge/built_with-Svelte-FF3E00?style=flat&logo=svelte) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)
 
+Built by [hokamsingh](https://github.com/hokamsingh)
+
 ## Features
 
 - **9 progressive layers** — home row → full keyboard → free flow
