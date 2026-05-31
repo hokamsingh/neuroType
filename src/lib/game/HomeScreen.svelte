@@ -7,7 +7,7 @@
 
   import { onMount, onDestroy } from 'svelte'
 
-  const dispatch = createEventDispatcher<{ start: number; stats: void; settings: void; speedburst: void; race: void; themeChange: 'dark'|'light'; fluidChange: FluidBg }>()
+  const dispatch = createEventDispatcher<{ start: number; daily: number; stats: void; settings: void; speedburst: void; race: void; themeChange: 'dark'|'light'; fluidChange: FluidBg }>()
 
   let progress = loadProgress()
   let currentTheme: 'dark'|'light' = progress.settings.theme ?? 'light'
@@ -86,6 +86,18 @@
   ]
   const WAVE_DURATION = 9   // seconds per full cycle
   const WAVE_STEP     = 0.8 // seconds between letters — must be > active window (0.72s)
+
+  function getDailyLayerId(): number {
+    const now = new Date()
+    const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000)
+    return dayOfYear % 9
+  }
+
+  $: maxUnlockedId   = Math.max(...unlockedIds, 0)
+  $: dailyLayerId    = Math.min(getDailyLayerId(), maxUnlockedId)
+  $: dailyLayer      = LAYERS.find(l => l.id === dailyLayerId)
+  $: todayStr        = new Date().toISOString().slice(0, 10)
+  $: hasDoneDaily    = progress.sessions.some(s => s.isDaily && new Date(s.ts).toISOString().slice(0, 10) === todayStr)
 
   $: bestWpm      = Math.max(...Object.values(progress.layers).map(l => l.bestWpm), 0)
   $: bestAcc      = Math.max(...Object.values(progress.layers).map(l => l.bestAccuracy), 0)
@@ -324,6 +336,9 @@
     </div>
 
     <div class="bottom-actions">
+      <button class="nav-btn daily-cta-btn" on:click={() => dispatch('daily', dailyLayerId)}>
+        {hasDoneDaily ? '✓ daily' : '📅 daily'}
+      </button>
       <button class="nav-btn race-btn" on:click={() => dispatch('race')}>⬇ race</button>
       <button class="nav-btn" on:click={() => dispatch('speedburst')}>⚡ burst</button>
       <button class="nav-btn" on:click={() => dispatch('stats')}>stats</button>
@@ -922,6 +937,17 @@
     color: #fb923c;
     border-color: #f97316;
     background: #f9731610;
+  }
+
+  .daily-cta-btn {
+    color: #fbbf24;
+    border-color: #fbbf2440;
+  }
+
+  .daily-cta-btn:hover {
+    color: #fcd34d;
+    border-color: #fbbf24;
+    background: #fbbf2410;
   }
 
   .key-nav-hints {

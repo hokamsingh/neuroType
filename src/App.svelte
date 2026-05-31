@@ -28,8 +28,15 @@
   let prevAcc        = 0
   let newAchievements: string[] = []
   let isBlind        = false
+  let isDailySession = false
   let fluidVariant   = loadProgress().settings.fluidBg ?? 'aurora'
   let showWelcome    = !localStorage.getItem('neurotype:onboarded')
+
+  function getDailyLayerId(): number {
+    const now = new Date()
+    const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000)
+    return dayOfYear % 9
+  }
 
   $: activeLayer = getLayer(activeLayerId)
 
@@ -53,6 +60,11 @@
     screen          = 'lesson'
   }
 
+  function startDailyChallenge(id?: number) {
+    isDailySession = true
+    startLesson(id ?? getDailyLayerId())
+  }
+
   function handleRoundDone(result: RoundResult, opts: { isSpeedBurst?: boolean } = {}) {
     lastResult = result
 
@@ -66,7 +78,7 @@
       activeLayerId, result.wpm, result.accuracy,
       result.fingerErrors, result.keyErrors, result.keyPresses,
       layer.unlockWpm + 1,
-      { isSpeedBurst: opts.isSpeedBurst, isBlind, duration: result.duration }
+      { isSpeedBurst: opts.isSpeedBurst, isBlind, isDaily: isDailySession, duration: result.duration }
     )
 
     const newRankObj = getRank(result.wpm, result.accuracy)
@@ -92,6 +104,7 @@
     })
     if (newAchievements.length > 0) saveProgress(p)
 
+    isDailySession = false
     screen = 'result'
   }
 
@@ -116,6 +129,7 @@
   {#if screen === 'home'}
     <HomeScreen
       on:start={(e) => startLesson(e.detail)}
+      on:daily={(e) => startDailyChallenge(e.detail)}
       on:stats={() => screen = 'stats'}
       on:settings={() => screen = 'settings'}
       on:speedburst={() => { activeLayerId = 7; screen = 'burst' }}
@@ -169,7 +183,11 @@
   {/if}
 
   {#if showWelcome}
-    <WelcomeModal on:dismiss={() => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1') }} />
+    <WelcomeModal
+      on:dismiss={() => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1') }}
+      on:daily={() => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1'); startDailyChallenge() }}
+      on:race={() => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1'); screen = 'race' }}
+    />
   {/if}
 </div>
 

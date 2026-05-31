@@ -1,18 +1,20 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
 
-  const dispatch = createEventDispatcher<{ dismiss: void }>()
+  const dispatch = createEventDispatcher<{ dismiss: void; daily: void; race: void }>()
 
   const features = [
-    { icon: '⬆', name: '9 progressive layers',  desc: 'home row → free flow — unlock each by hitting the WPM target' },
-    { icon: '♟', name: 'chess rank system',      desc: 'climb from Pawn to Grandmaster based on speed + accuracy' },
-    { icon: '👻', name: 'ghost run',              desc: 'race your own personal best on any layer' },
-    { icon: '⚡', name: 'speed burst',            desc: 'high-intensity timed drills to push your ceiling' },
-    { icon: '⬇', name: 'race mode',              desc: 'compete against bots with real words at varying speeds' },
-    { icon: '⁘', name: 'fluid backgrounds',       desc: '10 animated styles — toggle theme + bg in the top-right' },
+    { icon: '⬆', name: '9 progressive layers',  desc: 'home row → free flow — unlock each by hitting the WPM target', cta: null },
+    { icon: '♟', name: 'chess rank system',      desc: 'climb from Pawn to Grandmaster based on speed + accuracy',     cta: null },
+    { icon: '👻', name: 'ghost run',              desc: 'race your own personal best on any layer',                      cta: null },
+    { icon: '⚡', name: 'speed burst',            desc: 'high-intensity timed drills to push your ceiling',              cta: null },
+    { icon: '⬇', name: 'race mode',              desc: 'compete against bots with real words at varying speeds',         cta: 'race' },
+    { icon: '⁘', name: 'fluid backgrounds',       desc: '10 animated styles — toggle theme + bg in the top-right',      cta: null },
   ]
 
-  function dismiss() { dispatch('dismiss') }
+  function dismiss()    { dispatch('dismiss') }
+  function startDaily() { dispatch('daily') }
+  function startRace()  { dispatch('race') }
 
   function onKey(e: KeyboardEvent) {
     if (e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') {
@@ -42,9 +44,28 @@
             <span class="f-name">{f.name}</span>
             <span class="f-desc">{f.desc}</span>
           </span>
+          {#if f.cta === 'race'}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <span class="f-cta" on:click|stopPropagation={startRace}>→ try it</span>
+          {/if}
         </li>
       {/each}
     </ul>
+
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="daily-card" on:click|stopPropagation={startDaily}>
+      <div class="daily-card-left">
+        <span class="daily-card-icon">📅</span>
+        <div class="daily-card-text">
+          <span class="daily-card-title">today's daily challenge</span>
+          <span class="daily-card-sub">one layer, every day — build your streak</span>
+        </div>
+      </div>
+      <button class="daily-card-btn" on:click|stopPropagation={startDaily}>
+        → start
+      </button>
+    </div>
 
     <button class="start-btn" on:click={dismiss}>
       press <kbd>space</kbd> to start
@@ -156,6 +177,94 @@
     font-size: 11px;
     color: var(--muted);
     line-height: 1.5;
+  }
+
+  .f-cta {
+    flex-shrink: 0;
+    align-self: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: #f97316;
+    border: 1px solid #f9731640;
+    border-radius: 4px;
+    padding: 2px 8px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+
+  .f-cta:hover {
+    background: #f9731618;
+    border-color: #f97316;
+  }
+
+  /* Daily challenge card */
+  .daily-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid #fbbf2440;
+    border-radius: 10px;
+    background: #fbbf2408;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .daily-card:hover {
+    background: #fbbf2412;
+    border-color: #fbbf2466;
+  }
+
+  .daily-card-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .daily-card-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .daily-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .daily-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .daily-card-sub {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .daily-card-btn {
+    flex-shrink: 0;
+    background: #fbbf24;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .daily-card-btn:hover {
+    opacity: 0.85;
   }
 
   .start-btn {
