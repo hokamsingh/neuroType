@@ -49,6 +49,10 @@
     <button class="start-btn" on:click={dismiss}>
       press <kbd>space</kbd> to start
     </button>
+
+    <div class="signature">
+      — <a href="https://github.com/hokamsingh" target="_blank" rel="noopener">hokamsingh</a>
+    </div>
   </div>
 </div>
 
@@ -183,4 +187,21 @@
     opacity: 0.6;
     background: transparent;
   }
+
+  .signature {
+    text-align: right;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--border);
+    letter-spacing: 0.04em;
+  }
+
+  .signature a {
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.15s;
+  }
+
+  .signature a:hover { color: var(--text); }
 </style>
