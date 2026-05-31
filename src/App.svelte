@@ -8,6 +8,7 @@
   import SettingsScreen   from './lib/settings/SettingsScreen.svelte'
   import AchievementToast from './lib/game/AchievementToast.svelte'
   import FluidBg          from './lib/game/FluidBg.svelte'
+  import WelcomeModal     from './lib/game/WelcomeModal.svelte'
 
   import { onMount } from 'svelte'
   import { getLayer }                          from './lib/lessons/patterns'
@@ -28,6 +29,7 @@
   let newAchievements: string[] = []
   let isBlind        = false
   let fluidVariant   = loadProgress().settings.fluidBg ?? 'aurora'
+  let showWelcome    = !localStorage.getItem('neurotype:onboarded')
 
   $: activeLayer = getLayer(activeLayerId)
 
@@ -164,6 +166,10 @@
 
   {#if newAchievements.length > 0}
     <AchievementToast ids={newAchievements} />
+  {/if}
+
+  {#if showWelcome}
+    <WelcomeModal on:dismiss={() => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1') }} />
   {/if}
 </div>
 
