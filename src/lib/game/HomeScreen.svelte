@@ -441,6 +441,7 @@
     align-items: flex-end;
     gap: 0;
     line-height: 1.2;
+    font-style: italic;
   }
 
   .logo-letter {
