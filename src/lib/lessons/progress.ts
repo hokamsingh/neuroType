@@ -272,4 +272,5 @@ export function resetLayerFull(layerId: number): void {
 
 export function resetProgress(): void {
   localStorage.removeItem(KEY)
+  localStorage.removeItem('neurotype:onboarded')
 }

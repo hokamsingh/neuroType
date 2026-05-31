@@ -7,7 +7,7 @@
 
   import { onMount, onDestroy } from 'svelte'
 
-  const dispatch = createEventDispatcher<{ start: number; daily: number; stats: void; settings: void; speedburst: void; race: void; themeChange: 'dark'|'light'; fluidChange: FluidBg }>()
+  const dispatch = createEventDispatcher<{ start: number; daily: number; stats: void; settings: void; speedburst: void; race: void; reset: void; themeChange: 'dark'|'light'; fluidChange: FluidBg }>()
 
   export let userName: string = ''
 
@@ -149,6 +149,7 @@
       progress = loadProgress()
       fullResetArmed = false
       if (fullResetTimer) clearTimeout(fullResetTimer)
+      dispatch('reset')
     } else {
       fullResetArmed = true
       fullResetTimer = setTimeout(() => { fullResetArmed = false }, 5000)

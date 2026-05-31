@@ -146,6 +146,7 @@
       on:settings={() => screen = 'settings'}
       on:speedburst={() => { activeLayerId = 7; screen = 'burst' }}
       on:race={() => screen = 'race'}
+      on:reset={() => { userName = ''; showWelcome = true }}
       on:themeChange={(e) => document.documentElement.setAttribute('data-theme', e.detail)}
       on:fluidChange={(e) => { fluidVariant = e.detail }}
     />
