@@ -173,6 +173,7 @@
     <TypingZone
       layer={activeLayer}
       {isBlind}
+      isMobile={isMobileDevice}
       on:done={(e) => handleRoundDone(e.detail)}
       on:retry={retry}
       on:home={() => screen = 'home'}

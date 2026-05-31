@@ -11,6 +11,7 @@
 
   export let layer: Layer
   export let isBlind: boolean = false
+  export let isMobile: boolean = false
 
   const dispatch = createEventDispatcher<{ done: RoundResult; home: void; retry: void }>()
 
@@ -115,6 +116,45 @@
     }, 400)
   }
 
+  // Mobile soft-keyboard support
+  let hiddenInput: HTMLInputElement | null = null
+  let mobileKeyboardActive = false
+
+  function activateMobileKeyboard() {
+    hiddenInput?.focus()
+    mobileKeyboardActive = true
+  }
+
+  function onMobileInput(e: Event) {
+    const input = e.target as HTMLInputElement
+    const val = input.value
+    if (!val) return
+    const char = val[val.length - 1]
+    input.value = ''
+
+    if (engine.done) {
+      if (char === ' ') dispatch('retry')
+      return
+    }
+
+    const { state, correct } = handleKeyPress(engine, char)
+    engine = state
+    flashKey = engine.sequence[engine.index - 1] ?? char
+    flashCorrect = correct
+    setTimeout(() => { flashKey = null }, 180)
+    if (state.done) setTimeout(() => dispatch('done', computeResult(state)), 500)
+  }
+
+  function onMobileKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') { dispatch('home'); return }
+    if (e.key === 'Enter' && engine.done) { dispatch('done', computeResult(engine)); return }
+    // Backspace when empty fires keydown but not input — treat as wrong press, ignore
+  }
+
+  function onMobileBlur() {
+    mobileKeyboardActive = false
+  }
+
   onMount(() => {
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
@@ -126,6 +166,23 @@
     clearInterval(tipTimer)
   })
 </script>
+
+{#if isMobile}
+  <!-- svelte-ignore a11y-autofocus -->
+  <input
+    bind:this={hiddenInput}
+    class="hidden-kbd-input"
+    type="text"
+    inputmode="text"
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck={false}
+    on:input={onMobileInput}
+    on:keydown={onMobileKeydown}
+    on:blur={onMobileBlur}
+  />
+{/if}
 
 <!-- Top progress bar -->
 <div class="progress-track">
@@ -243,6 +300,17 @@
 
   <!-- Keyboard map (hidden in blind mode) -->
   <div class="keyboard-section">
+    {#if isMobile}
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div
+        class="tap-to-type"
+        class:tap-active={mobileKeyboardActive}
+        on:click={activateMobileKeyboard}
+      >
+        {mobileKeyboardActive ? '⌨ typing…' : '⌨ tap to type'}
+      </div>
+    {/if}
     {#if isBlind}
       <div class="blind-placeholder">keyboard hidden — blind mode</div>
     {:else}
@@ -277,7 +345,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
     padding: 36px 20px 20px;
     height: 100%;
   }
@@ -512,8 +579,17 @@
     letter-spacing: 0.04em;
   }
 
+  .content-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+
   .keyboard-section {
-    margin-top: auto;
+    flex-shrink: 0;
   }
 
   .blind-placeholder {
@@ -552,6 +628,41 @@
     100% { opacity: 0; }
   }
 
+  .hidden-kbd-input {
+    position: fixed;
+    top: -100px;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    font-size: 16px; /* prevent iOS zoom on focus */
+    border: none;
+    outline: none;
+    background: transparent;
+    color: transparent;
+  }
+
+  .tap-to-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    background: var(--surface);
+    user-select: none;
+    margin-bottom: 8px;
+  }
+
+  .tap-to-type.tap-active {
+    color: var(--text);
+    border-color: var(--muted);
+  }
+
   @media (max-width: 640px) {
     .typing-zone {
       padding: 52px 10px 12px;
@@ -574,10 +685,11 @@
     .sequence-preview { max-width: 100%; }
     .keyboard-section {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       width: 100%;
       overflow: hidden;
-      height: 150px;
+      height: 185px;
       flex-shrink: 0;
     }
   }
