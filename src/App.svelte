@@ -9,6 +9,7 @@
   import AchievementToast from './lib/game/AchievementToast.svelte'
   import FluidBg          from './lib/game/FluidBg.svelte'
   import WelcomeModal     from './lib/game/WelcomeModal.svelte'
+  import MobileModal      from './lib/game/MobileModal.svelte'
 
   import { onMount } from 'svelte'
   import { getLayer }                          from './lib/lessons/patterns'
@@ -33,6 +34,10 @@
   let fluidVariant   = loadProgress().settings.fluidBg ?? 'aurora'
   let userName       = loadProgress().settings.userName ?? ''
   let showWelcome    = !localStorage.getItem('neurotype:onboarded')
+  let showMobile     = (() => {
+    const touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+    return touch && window.innerWidth < 768
+  })()
 
   function saveName(name: string) {
     if (!name) return
@@ -197,7 +202,11 @@
     <AchievementToast ids={newAchievements} />
   {/if}
 
-  {#if showWelcome}
+  {#if showMobile}
+    <MobileModal on:tryAnyway={() => showMobile = false} />
+  {/if}
+
+  {#if showWelcome && !showMobile}
     <WelcomeModal
       on:dismiss={(e) => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1'); saveName(e.detail) }}
       on:daily={(e)   => { showWelcome = false; localStorage.setItem('neurotype:onboarded', '1'); saveName(e.detail); startDailyChallenge() }}
