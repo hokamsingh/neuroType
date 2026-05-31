@@ -276,6 +276,14 @@
     {/each}
   </div>
 
+  <footer class="attribution">
+    concept &amp; design by <a href="https://github.com/hokamsingh" target="_blank" rel="noopener">hokamsingh</a>
+    <span class="attr-sep">·</span>
+    built with <span class="attr-stack">svelte · typescript · vite</span>
+    <span class="attr-sep">·</span>
+    AI pair programming by <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>
+  </footer>
+
   <div class="bottom-bar">
     <div class="key-nav-hints">
       <span class="hint"><kbd>←→</kbd> select</span>
@@ -762,6 +770,35 @@
 
   .reset-option-danger .reset-option-sub {
     color: #f8717166;
+  }
+
+  /* Attribution footer */
+  .attribution {
+    font-size: 10px;
+    color: var(--border);
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .attribution a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .attribution a:hover {
+    color: var(--text);
+  }
+
+  .attr-sep { opacity: 0.4; }
+
+  .attr-stack {
+    color: var(--border);
+    letter-spacing: 0.04em;
   }
 
   /* Bottom bar */
