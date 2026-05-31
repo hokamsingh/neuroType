@@ -159,6 +159,13 @@
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
     tipTimer = setInterval(rotateTip, 6000)
+    // Try auto-focusing hidden input on mobile (works on Android; silently fails on iOS Safari without user gesture)
+    if (isMobile) {
+      setTimeout(() => {
+        hiddenInput?.focus()
+        mobileKeyboardActive = !!document.activeElement && document.activeElement === hiddenInput
+      }, 100)
+    }
   })
   onDestroy(() => {
     window.removeEventListener('keydown', onKeyDown)
@@ -182,6 +189,12 @@
     on:keydown={onMobileKeydown}
     on:blur={onMobileBlur}
   />
+{/if}
+
+{#if isMobile}
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div class="mobile-back" on:click={() => dispatch('home')}>← home</div>
 {/if}
 
 <!-- Top progress bar -->
@@ -308,7 +321,7 @@
         class:tap-active={mobileKeyboardActive}
         on:click={activateMobileKeyboard}
       >
-        {mobileKeyboardActive ? '⌨ typing…' : '⌨ tap to type'}
+        {mobileKeyboardActive ? '⌨ keyboard active' : '⌨ tap here to open keyboard'}
       </div>
     {/if}
     {#if isBlind}
@@ -628,6 +641,24 @@
     100% { opacity: 0; }
   }
 
+  .mobile-back {
+    position: fixed;
+    top: 44px;
+    left: 12px;
+    z-index: 150;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--surface);
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.7;
+  }
+
   .hidden-kbd-input {
     position: fixed;
     top: -100px;
@@ -645,22 +676,24 @@
 
   .tap-to-type {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 16px;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    border: 1px solid #fbbf2466;
+    border-radius: 8px;
+    padding: 10px 28px;
     cursor: pointer;
-    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
     background: var(--surface);
     user-select: none;
     margin-bottom: 8px;
+    box-shadow: 0 0 12px #fbbf2418;
   }
 
   .tap-to-type.tap-active {
-    color: var(--text);
-    border-color: var(--muted);
+    color: #fbbf24;
+    border-color: #fbbf24;
+    box-shadow: 0 0 16px #fbbf2430;
   }
 
   @media (max-width: 640px) {
