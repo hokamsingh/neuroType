@@ -27,11 +27,9 @@
       return `border-color: ${color}; background-color: ${color}; color: #000;`
     }
     if (isLifted && isAnchor) {
-      // finger lifted when it shouldn't — red border flash
       return `border-color: #f8717188; color: #f87171; background: #f8717110;`
     }
     if (isAnchor) {
-      // anchor: visible but dimmer than active — pulsing border
       return `border-color: ${color}55; color: ${color}66; background: ${color}0a;`
     }
     return `border-color: ${color}1a; color: ${color}44;`

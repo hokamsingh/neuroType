@@ -99,6 +99,8 @@
     'home row is home base — always return',
     'think of each key as belonging to a finger, not a hand',
     'trust muscle memory — stop looking at keys',
+    'hand setup: left pinky on A, ring on S, middle on D, index on F — mirror right side on JKL;',
+    'try it physically: rest fingers on ASDF + JKL;, thumbs hovering above space — feel the reach zones',
   ]
 
   let tipIndex = Math.floor(Math.random() * TIPS.length)
