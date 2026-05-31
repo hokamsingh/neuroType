@@ -61,6 +61,17 @@
     const s = loadProgress().settings
     document.documentElement.setAttribute('data-theme', s.theme ?? 'dark')
     fluidVariant = s.fluidBg ?? 'aurora'
+
+    if (showMobile) {
+      const onPhysicalKey = (e: KeyboardEvent) => {
+        if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter' || e.key === ' ') {
+          showMobile = false
+          showMobileBanner = false
+          window.removeEventListener('keydown', onPhysicalKey)
+        }
+      }
+      window.addEventListener('keydown', onPhysicalKey)
+    }
   })
 
   function onSettingsBack() {
