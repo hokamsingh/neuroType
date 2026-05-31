@@ -132,6 +132,34 @@
     </div>
   </div>
 
+  <div class="kb-section">
+    <div class="kb-title">keyboard shortcuts</div>
+    <div class="kb-grid">
+      <div class="kb-group">
+        <div class="kb-group-label">home</div>
+        <div class="kb-row"><kbd>Tab</kbd> <span>cycle lessons</span></div>
+        <div class="kb-row"><kbd>← ↑</kbd> <span>previous lesson</span></div>
+        <div class="kb-row"><kbd>→ ↓</kbd> <span>next lesson</span></div>
+        <div class="kb-row"><kbd>Space</kbd> <span>start lesson</span></div>
+      </div>
+      <div class="kb-group">
+        <div class="kb-group-label">lesson</div>
+        <div class="kb-row"><kbd>Esc</kbd> <span>back to home</span></div>
+        <div class="kb-row"><kbd>Space</kbd> <span>retry (after done)</span></div>
+        <div class="kb-row"><kbd>Enter</kbd> <span>view results</span></div>
+      </div>
+      <div class="kb-group">
+        <div class="kb-group-label">race</div>
+        <div class="kb-row"><kbd>F9</kbd> <span>pause / resume</span></div>
+        <div class="kb-row"><kbd>Esc</kbd> <span>quit modal + summary</span></div>
+      </div>
+      <div class="kb-group">
+        <div class="kb-group-label">everywhere</div>
+        <div class="kb-row"><kbd>Esc</kbd> <span>back / close</span></div>
+      </div>
+    </div>
+  </div>
+
   <div class="settings-footer">
     settings auto-save
   </div>
@@ -250,5 +278,64 @@
     padding: 1px 4px;
     color: var(--muted);
     background: var(--bg);
+  }
+
+  /* Keyboard legend */
+  .kb-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .kb-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .kb-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+
+  .kb-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .kb-group-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .kb-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .kb-row kbd {
+    font-size: 9px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .kb-row span {
+    color: var(--text);
+    font-size: 11px;
   }
 </style>

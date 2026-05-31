@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, createEventDispatcher } from 'svelte'
-  import { pickWord, FALL_SPEEDS, SPAWN_RATES } from './words'
+  import { makeWordQueue, FALL_SPEEDS, SPAWN_RATES } from './words'
   import type { Difficulty } from './words'
   import { sounds } from '../audio/sounds'
 
@@ -14,34 +14,44 @@
   interface FallingWord {
     id: number
     text: string
-    x: number           // % left offset
-    duration: number    // CSS animation ms
+    x: number
+    duration: number
     typed: number
     done: boolean
   }
 
-  let words: FallingWord[] = []
-  let idSeq      = 0
-  let hp         = 3
-  let score      = 0
-  let started    = false
-  let gameOver   = false
+  const wordQueue = makeWordQueue(difficulty)
+
+  let words: FallingWord[]  = []
+  let idSeq       = 0
+  let hp          = 3
+  let score       = 0
+  let started     = false
+  let gameOver    = false
+  let paused      = false
+  let showQuitModal = false
   let correctKeys = 0
   let wrongKeys   = 0
-  let startTs    = 0
-  let liveWpm    = 0
-  let wrongFlash = false  // flash on wrong key
+  let startTs     = 0
+  let totalPausedMs = 0
+  let pauseStartTs  = 0
+  let liveWpm     = 0
+  let wrongFlash  = false
 
   let spawnTimer: ReturnType<typeof setInterval>
   let wpmTimer  : ReturnType<typeof setInterval>
 
-  // Active = first non-done word (they fall in spawn order, so first = earliest/lowest)
   $: activeWord = words.filter(w => !w.done)[0] ?? null
+
+  function activeMins() {
+    const paused_so_far = paused ? totalPausedMs + (Date.now() - pauseStartTs) : totalPausedMs
+    return (Date.now() - startTs - paused_so_far) / 60000
+  }
 
   function spawnWord() {
     words = [...words, {
       id:       idSeq++,
-      text:     pickWord(difficulty),
+      text:     wordQueue.next(),
       x:        8 + Math.random() * 60,
       duration: FALL_SPEEDS[difficulty] + (Math.random() - 0.5) * 2000,
       typed:    0,
@@ -50,11 +60,9 @@
   }
 
   function wordReachedBottom(id: number) {
-    if (gameOver) return
-    // check if this word was completed before hitting bottom
+    if (gameOver || paused) return
     const w = words.find(w => w.id === id)
     if (!w || w.done) return
-    // word missed
     words = words.filter(w => w.id !== id)
     hp--
     sounds.wrongKey()
@@ -67,27 +75,84 @@
     spawnWord()
     spawnTimer = setInterval(spawnWord, SPAWN_RATES[difficulty])
     wpmTimer   = setInterval(() => {
-      if (!started || gameOver) return
-      const mins = (Date.now() - startTs) / 60000
+      if (!started || gameOver || paused) return
+      const mins = activeMins()
       liveWpm = mins > 0 ? Math.round((correctKeys / 5) / mins) : 0
     }, 500)
   }
 
   function endGame() {
     gameOver = true
+    if (paused) resumeGame()
     clearInterval(spawnTimer)
     clearInterval(wpmTimer)
     sounds.lessonComplete()
-    const mins = (Date.now() - startTs) / 60000
+    const mins = activeMins()
     const wpm  = mins > 0 ? Math.round((correctKeys / 5) / mins) : 0
     const tot  = correctKeys + wrongKeys
     const acc  = tot > 0 ? Math.round((correctKeys / tot) * 100) : 0
     setTimeout(() => dispatch('done', { score, wpm, accuracy: acc }), 1200)
   }
 
+  function pauseGame() {
+    if (!started || gameOver) return
+    paused = true
+    pauseStartTs = Date.now()
+    clearInterval(spawnTimer)
+    clearInterval(wpmTimer)
+  }
+
+  function resumeGame() {
+    if (!paused) return
+    totalPausedMs += Date.now() - pauseStartTs
+    paused = false
+    spawnTimer = setInterval(spawnWord, SPAWN_RATES[difficulty])
+    wpmTimer   = setInterval(() => {
+      if (!started || gameOver || paused) return
+      const mins = activeMins()
+      liveWpm = mins > 0 ? Math.round((correctKeys / 5) / mins) : 0
+    }, 500)
+  }
+
+  function togglePause() {
+    if (paused) resumeGame()
+    else pauseGame()
+  }
+
+  function openQuitModal() {
+    if (started && !gameOver) pauseGame()
+    showQuitModal = true
+  }
+
+  function closeQuitModal() {
+    showQuitModal = false
+    if (started && !gameOver) resumeGame()
+  }
+
+  function confirmQuit() {
+    showQuitModal = false
+    dispatch('home')
+  }
+
+  $: quitWpm = (() => {
+    if (!started) return 0
+    const mins = activeMins()
+    return mins > 0 ? Math.round((correctKeys / 5) / mins) : 0
+  })()
+
+  $: quitAcc = (() => {
+    const tot = correctKeys + wrongKeys
+    return tot > 0 ? Math.round((correctKeys / tot) * 100) : 0
+  })()
+
   function onKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Escape') { e.preventDefault(); dispatch('home'); return }
-    if (gameOver) return
+    if (showQuitModal) {
+      if (e.key === 'Escape') { e.preventDefault(); closeQuitModal() }
+      return
+    }
+    if (e.key === 'Escape') { e.preventDefault(); openQuitModal(); return }
+    if (e.key === 'F9' || (e.key === 'p' && e.ctrlKey)) { e.preventDefault(); togglePause(); return }
+    if (gameOver || paused) return
     const key = e.key === 'Space' ? ' ' : e.key
     if (key.length > 1) return
     e.preventDefault()
@@ -105,7 +170,6 @@
 
       if (complete) {
         words = words.map(w => w.id === activeWord!.id ? { ...w, typed: newTyped, done: true } : w)
-        // remove done word after a brief flash
         setTimeout(() => {
           words = words.filter(w => w.id !== activeWord!.id)
         }, 200)
@@ -130,9 +194,9 @@
   })
 
   // ── Speedometer ───────────────────────────────────────────
-  const R      = 48
+  const R       = 48
   const MAX_WPM = 120
-  const SWEEP  = 220
+  const SWEEP   = 220
 
   function angle(wpm: number): number {
     return -110 + (Math.min(wpm, MAX_WPM) / MAX_WPM) * SWEEP
@@ -186,12 +250,17 @@
     </svg>
   </div>
 
-  <button class="quit-btn" on:click={() => dispatch('home')}>✕ quit</button>
+  {#if started && !gameOver}
+    <button class="pause-btn" on:click={togglePause} title="Pause / Resume (F9)">
+      {paused ? '▶' : '⏸'}
+    </button>
+  {/if}
+
+  <button class="quit-btn" on:click={openQuitModal}>✕ quit</button>
 </div>
 
 <!-- Falling words arena -->
-<div class="arena">
-  <!-- Deadline line at bottom -->
+<div class="arena" class:arena-paused={paused}>
   <div class="deadline"></div>
 
   {#each words as word (word.id)}
@@ -211,6 +280,14 @@
     <div class="start-msg">start typing to begin</div>
   {/if}
 
+  {#if paused}
+    <div class="pause-overlay">
+      <div class="pause-icon">⏸</div>
+      <div class="pause-label">paused</div>
+      <div class="pause-hint">press F9 or click ▶ to resume</div>
+    </div>
+  {/if}
+
   {#if gameOver}
     <div class="gameover">
       <div class="go-piece">♟</div>
@@ -224,6 +301,45 @@
 {#if activeWord && started && !gameOver}
   <div class="active-strip" class:wrong-flash={wrongFlash}>
     <span class="as-typed">{activeWord.text.slice(0, activeWord.typed)}</span><span class="as-next">{activeWord.text[activeWord.typed] ?? ''}</span><span class="as-rest">{activeWord.text.slice(activeWord.typed + 1)}</span>
+  </div>
+{/if}
+
+<!-- Quit modal -->
+{#if showQuitModal}
+  <div class="modal-backdrop" on:click={closeQuitModal}>
+    <div class="modal" on:click|stopPropagation>
+      <div class="modal-title">race summary</div>
+
+      <div class="modal-stats">
+        <div class="stat-row">
+          <span class="stat-label">words</span>
+          <span class="stat-val">{score}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">wpm</span>
+          <span class="stat-val">{quitWpm}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">accuracy</span>
+          <span class="stat-val">{quitAcc}%</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">difficulty</span>
+          <span class="stat-val">{difficulty}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">lives left</span>
+          <span class="stat-val">{hp} / 3</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        {#if !gameOver}
+          <button class="btn-resume" on:click={closeQuitModal}>▶ resume</button>
+        {/if}
+        <button class="btn-exit" on:click={confirmQuit}>exit to home</button>
+      </div>
+    </div>
   </div>
 {/if}
 
@@ -274,6 +390,22 @@
     margin-left: auto;
   }
 
+  .pause-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .pause-btn:hover { color: #fbbf24; border-color: #fbbf2460; }
+
   .quit-btn {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -305,7 +437,12 @@
     border-top: 1px dashed #f8717144;
   }
 
-  /* Falling words — CSS animation drives the fall */
+  /* Pause all falling animations */
+  .arena-paused .word {
+    animation-play-state: paused;
+  }
+
+  /* Falling words */
   .word {
     position: absolute;
     top: -6%;
@@ -336,6 +473,23 @@
   .next     { color: #fbbf24; text-decoration: underline; text-underline-offset: 4px; }
   .rest     { color: var(--text); }
   .rest-dim { color: var(--muted); }
+
+  /* Pause overlay */
+  .pause-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(3px);
+  }
+
+  .pause-icon  { font-size: 40px; color: #fbbf24; }
+  .pause-label { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: 0.12em; text-transform: uppercase; }
+  .pause-hint  { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
 
   /* Active strip */
   .active-strip {
@@ -384,4 +538,93 @@
   .go-piece  { font-size: 56px; color: var(--border); }
   .go-score  { font-size: 48px; font-weight: 700; color: var(--text); line-height: 1; }
   .go-label  { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* Quit modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 32px 40px;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .modal-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .modal-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  .stat-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-resume, .btn-exit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    border-radius: 5px;
+    padding: 8px 18px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    flex: 1;
+    transition: opacity 0.15s;
+  }
+
+  .btn-resume {
+    background: #fbbf2418;
+    color: #fbbf24;
+    border: 1px solid #fbbf2440;
+  }
+
+  .btn-resume:hover { opacity: 0.8; }
+
+  .btn-exit {
+    background: #f8717118;
+    color: #f87171;
+    border: 1px solid #f8717140;
+  }
+
+  .btn-exit:hover { opacity: 0.8; }
 </style>
