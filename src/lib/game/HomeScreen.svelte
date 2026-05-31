@@ -276,14 +276,6 @@
     {/each}
   </div>
 
-  <footer class="attribution">
-    concept &amp; design by <a href="https://github.com/hokamsingh" target="_blank" rel="noopener">hokamsingh</a>
-    <span class="attr-sep">·</span>
-    built with <span class="attr-stack">svelte · typescript · vite</span>
-    <span class="attr-sep">·</span>
-    AI pair programming by <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>
-  </footer>
-
   <div class="bottom-bar">
     <div class="key-nav-hints">
       <span class="hint"><kbd>←→</kbd> select</span>
@@ -307,6 +299,13 @@
       </button>
     </div>
   </div>
+  <footer class="attribution">
+    concept &amp; design by <a href="https://github.com/hokamsingh" target="_blank" rel="noopener">hokamsingh</a>
+    <span class="attr-sep">·</span>
+    built with <span class="attr-stack">svelte · typescript · vite</span>
+    <span class="attr-sep">·</span>
+    AI pair programming by <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>
+  </footer>
 </div>
 
 <style>
@@ -775,29 +774,32 @@
   /* Attribution footer */
   .attribution {
     font-size: 10px;
-    color: var(--border);
+    font-weight: 500;
+    color: var(--muted);
     letter-spacing: 0.06em;
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
     justify-content: center;
+    padding-bottom: 4px;
   }
 
   .attribution a {
-    color: var(--muted);
+    color: var(--text);
+    font-weight: 600;
     text-decoration: none;
-    transition: color 0.15s;
+    transition: opacity 0.15s;
   }
 
   .attribution a:hover {
-    color: var(--text);
+    opacity: 0.7;
   }
 
-  .attr-sep { opacity: 0.4; }
+  .attr-sep { opacity: 0.35; }
 
   .attr-stack {
-    color: var(--border);
+    color: var(--muted);
     letter-spacing: 0.04em;
   }
 
