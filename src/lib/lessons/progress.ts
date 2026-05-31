@@ -66,7 +66,7 @@ export interface Progress {
 const KEY = 'neurotype:progress'
 
 function defaultSettings(): Settings {
-  return { soundEnabled: true, metronomeEnabled: false, anchorHintsEnabled: true, blindMode: false, theme: 'dark', fluidBg: 'aurora' }
+  return { soundEnabled: true, metronomeEnabled: false, anchorHintsEnabled: true, blindMode: false, theme: 'light', fluidBg: 'aurora' }
 }
 
 function defaultProgress(): Progress {
@@ -101,7 +101,7 @@ export function loadProgress(): Progress {
     if (!p.achievements) p.achievements = {}
     if (!p.ghosts)       p.ghosts       = {}
     if (!p.settings)     p.settings     = defaultSettings()
-    if (!p.settings.theme)   p.settings.theme   = 'dark'
+    if (!p.settings.theme)   p.settings.theme   = 'light'
     if (!p.settings.fluidBg || !['aurora','metal','topo','silk','blobs','wireframe','smoke','grain','particles','fog','off'].includes(p.settings.fluidBg)) p.settings.fluidBg = 'aurora'
     if (p.streak === undefined) p.streak = 0
     if (!p.lastPlayDate) p.lastPlayDate = ''
