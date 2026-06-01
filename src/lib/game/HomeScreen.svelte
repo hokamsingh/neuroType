@@ -7,7 +7,7 @@
 
   import { onMount, onDestroy } from 'svelte'
 
-  const dispatch = createEventDispatcher<{ start: number; daily: number; stats: void; settings: void; speedburst: void; race: void; reset: void; themeChange: 'dark'|'light'; fluidChange: FluidBg }>()
+  const dispatch = createEventDispatcher<{ start: number; daily: number; stats: void; settings: void; tips: void; speedburst: void; race: void; reset: void; themeChange: 'dark'|'light'; fluidChange: FluidBg }>()
 
   export let userName: string = ''
 
@@ -341,19 +341,37 @@
     </div>
 
     <div class="bottom-actions">
-      <button class="nav-btn daily-cta-btn" on:click={() => dispatch('daily', dailyLayerId)}>
-        {hasDoneDaily ? '✓ daily' : '📅 daily'}
+      <button class="icon-btn daily-cta-btn" on:click={() => dispatch('daily', dailyLayerId)}>
+        <span class="btn-icon">{hasDoneDaily ? '✓' : '📅'}</span>
+        <span class="btn-label">{hasDoneDaily ? '✓ daily' : 'daily'}</span>
       </button>
-      <button class="nav-btn race-btn" on:click={() => dispatch('race')}>⬇ race</button>
-      <button class="nav-btn" on:click={() => dispatch('speedburst')}>⚡ burst</button>
-      <button class="nav-btn" on:click={() => dispatch('stats')}>stats</button>
-      <button class="nav-btn" on:click={() => dispatch('settings')}>settings</button>
+      <button class="icon-btn race-btn" on:click={() => dispatch('race')}>
+        <span class="btn-icon">🏎</span>
+        <span class="btn-label">race</span>
+      </button>
+      <button class="icon-btn" on:click={() => dispatch('speedburst')}>
+        <span class="btn-icon">🔥</span>
+        <span class="btn-label">burst</span>
+      </button>
+      <button class="icon-btn" on:click={() => dispatch('stats')}>
+        <span class="btn-icon">📊</span>
+        <span class="btn-label">stats</span>
+      </button>
+      <button class="icon-btn" on:click={() => dispatch('tips')}>
+        <span class="btn-icon">💡</span>
+        <span class="btn-label">tips</span>
+      </button>
+      <button class="icon-btn" on:click={() => dispatch('settings')}>
+        <span class="btn-icon">⚙️</span>
+        <span class="btn-label">settings</span>
+      </button>
       <button
-        class="full-reset-btn"
+        class="icon-btn full-reset-btn"
         class:armed={fullResetArmed}
         on:click={armFullReset}
       >
-        {fullResetArmed ? 'confirm reset' : 'reset all'}
+        <span class="btn-icon">{fullResetArmed ? '⚠️' : '🧹'}</span>
+        <span class="btn-label">{fullResetArmed ? 'confirm?' : 'reset'}</span>
       </button>
     </div>
   </div>
@@ -916,44 +934,77 @@
     align-items: center;
   }
 
-  .nav-btn {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
+  .icon-btn {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 10px;
+    overflow: hidden;
+    white-space: nowrap;
     background: var(--surface);
     border: 1px solid var(--border);
-    padding: 5px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-    letter-spacing: 0.04em;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
   }
 
-  .nav-btn:hover {
-    color: var(--text);
+  .btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 16px;
+  }
+
+  .btn-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-left: 0;
+    transition: max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.18s ease,
+                margin-left 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .icon-btn:hover .btn-label {
+    max-width: 72px;
+    opacity: 1;
+    margin-left: 7px;
+  }
+
+  .icon-btn:hover {
     border-color: var(--muted);
+    background: var(--bg);
   }
 
   .race-btn {
-    color: #f97316;
     border-color: #f9731640;
+    color: #f97316;
   }
 
   .race-btn:hover {
-    color: #fb923c;
     border-color: #f97316;
     background: #f9731610;
+    box-shadow: 0 0 8px #f9731622;
   }
 
   .daily-cta-btn {
-    color: #fbbf24;
     border-color: #fbbf2440;
+    color: #fbbf24;
   }
 
   .daily-cta-btn:hover {
-    color: #fcd34d;
     border-color: #fbbf24;
     background: #fbbf2410;
+    box-shadow: 0 0 8px #fbbf2422;
   }
 
   .key-nav-hints {
@@ -983,28 +1034,25 @@
     background: var(--surface);
   }
 
-  .full-reset-btn {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--border);
-    background: transparent;
-    border: 1px solid transparent;
-    padding: 4px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: color 0.2s, border-color 0.2s;
-    letter-spacing: 0.05em;
+  .full-reset-btn:hover {
+    border-color: #f8717155 !important;
+    background: #f871710a !important;
   }
 
-  .full-reset-btn:hover {
-    color: var(--muted);
-    border-color: var(--border);
+  .full-reset-btn:hover .btn-label {
+    color: #f87171;
   }
 
   .full-reset-btn.armed {
-    color: #f87171;
     border-color: #f8717166;
     animation: pulse-red 0.5s ease-in-out infinite alternate;
+  }
+
+  .full-reset-btn.armed .btn-label {
+    max-width: 72px;
+    opacity: 1;
+    margin-left: 7px;
+    color: #f87171;
   }
 
   @keyframes pulse-red {
@@ -1039,7 +1087,8 @@
     }
     .key-nav-hints { display: none; }
     .bottom-actions { flex-wrap: wrap; gap: 6px; }
-    .nav-btn, .full-reset-btn { font-size: 10px; padding: 4px 10px; }
+    .icon-btn { width: 32px; height: 32px; font-size: 15px; }
+    .full-reset-btn { font-size: 10px; padding: 4px 10px; }
     .attribution { font-size: 9px; letter-spacing: 0.02em; }
     .attr-stack { display: none; }
   }

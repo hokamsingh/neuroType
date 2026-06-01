@@ -113,6 +113,17 @@
 
     <div class="setting-row">
       <div class="setting-info">
+        <div class="setting-name">word announce</div>
+        <div class="setting-desc">speak each key aloud — type with eyes closed</div>
+      </div>
+      <button
+        class="toggle" class:on={settings.wordAnnounce}
+        on:click={() => toggle('wordAnnounce')}
+      >{settings.wordAnnounce ? 'on' : 'off'}</button>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-info">
         <div class="setting-name">theme</div>
         <div class="setting-desc">switch between dark and light appearance</div>
       </div>

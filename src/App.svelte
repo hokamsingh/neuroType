@@ -6,6 +6,7 @@
   import RaceScreen       from './lib/race/RaceScreen.svelte'
   import StatsScreen      from './lib/stats/StatsScreen.svelte'
   import SettingsScreen   from './lib/settings/SettingsScreen.svelte'
+  import TipsScreen       from './lib/game/TipsScreen.svelte'
   import AchievementToast from './lib/game/AchievementToast.svelte'
   import FluidBg          from './lib/game/FluidBg.svelte'
   import WelcomeModal     from './lib/game/WelcomeModal.svelte'
@@ -18,7 +19,7 @@
   import { checkAchievements }                 from './lib/achievements/achievements'
   import type { RoundResult }                  from './lib/lessons/LessonEngine'
 
-  type Screen = 'home' | 'lesson' | 'result' | 'burst' | 'race' | 'stats' | 'settings'
+  type Screen = 'home' | 'lesson' | 'result' | 'burst' | 'race' | 'stats' | 'settings' | 'tips'
 
   let screen        : Screen = 'home'
   let activeLayerId  = 0
@@ -29,6 +30,7 @@
   let prevAcc        = 0
   let newAchievements: string[] = []
   let isBlind        = false
+  let wordAnnounce   = false
   let isDailySession = false
   let lastWasDaily   = false
   let fluidVariant   = loadProgress().settings.fluidBg ?? 'aurora'
@@ -84,7 +86,9 @@
   function startLesson(id: number) {
     activeLayerId   = id
     newAchievements = []
-    isBlind         = loadProgress().settings.blindMode
+    const s         = loadProgress().settings
+    isBlind         = s.blindMode
+    wordAnnounce    = s.wordAnnounce
     screen          = 'lesson'
   }
 
@@ -161,6 +165,7 @@
       on:start={(e) => startLesson(e.detail)}
       on:daily={(e) => startDailyChallenge(e.detail)}
       on:stats={() => screen = 'stats'}
+      on:tips={() => screen = 'tips'}
       on:settings={() => screen = 'settings'}
       on:speedburst={() => { activeLayerId = 7; screen = 'burst' }}
       on:race={() => screen = 'race'}
@@ -173,6 +178,7 @@
     <TypingZone
       layer={activeLayer}
       {isBlind}
+      {wordAnnounce}
       isMobile={isMobileDevice}
       on:done={(e) => handleRoundDone(e.detail)}
       on:retry={retry}
@@ -209,6 +215,9 @@
 
   {:else if screen === 'stats'}
     <StatsScreen on:back={() => screen = 'home'} />
+
+  {:else if screen === 'tips'}
+    <TipsScreen on:back={() => screen = 'home'} />
 
   {:else if screen === 'settings'}
     <SettingsScreen on:back={onSettingsBack} on:fluidChange={(e) => { fluidVariant = e.detail }} />

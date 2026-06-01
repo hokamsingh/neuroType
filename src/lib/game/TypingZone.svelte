@@ -12,6 +12,7 @@
   export let layer: Layer
   export let isBlind: boolean = false
   export let isMobile: boolean = false
+  export let wordAnnounce: boolean = false
 
   const dispatch = createEventDispatcher<{ done: RoundResult; home: void; retry: void }>()
 
@@ -26,7 +27,15 @@
   let liftWarning  = false
   let liftedKeys   = new Set<string>()
 
+  function announceKey(key: string | null) {
+    if (!wordAnnounce || !key || typeof speechSynthesis === 'undefined') return
+    speechSynthesis.cancel()
+    const label = key === ' ' ? 'space' : key
+    speechSynthesis.speak(new SpeechSynthesisUtterance(label))
+  }
+
   $: currentKey    = engine.done ? null : (engine.sequence[engine.index] ?? null)
+  $: if (wordAnnounce) announceKey(currentKey)
   $: currentKeyDef = currentKey ? getKeyDef(currentKey) : null
   $: targetFinger  = currentKeyDef?.finger ?? null
   $: fingerColor   = targetFinger ? `var(--finger-${targetFinger})` : '#374151'
@@ -171,6 +180,7 @@
     window.removeEventListener('keydown', onKeyDown)
     window.removeEventListener('keyup', onKeyUp)
     clearInterval(tipTimer)
+    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
   })
 </script>
 

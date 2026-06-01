@@ -36,6 +36,7 @@ export interface Settings {
   metronomeEnabled: boolean
   anchorHintsEnabled: boolean
   blindMode: boolean
+  wordAnnounce: boolean
   theme: 'dark' | 'light'
   fluidBg: FluidBg
   userName: string
@@ -67,7 +68,7 @@ export interface Progress {
 const KEY = 'neurotype:progress'
 
 function defaultSettings(): Settings {
-  return { soundEnabled: true, metronomeEnabled: false, anchorHintsEnabled: true, blindMode: false, theme: 'light', fluidBg: 'aurora', userName: '' }
+  return { soundEnabled: true, metronomeEnabled: false, anchorHintsEnabled: true, blindMode: false, wordAnnounce: false, theme: 'light', fluidBg: 'aurora', userName: '' }
 }
 
 function defaultProgress(): Progress {
@@ -104,6 +105,7 @@ export function loadProgress(): Progress {
     if (!p.settings)     p.settings     = defaultSettings()
     if (!p.settings.theme)    p.settings.theme    = 'light'
     if (p.settings.userName === undefined) p.settings.userName = ''
+    if (p.settings.wordAnnounce === undefined) p.settings.wordAnnounce = false
     if (!p.settings.fluidBg || !['aurora','metal','topo','silk','blobs','wireframe','smoke','grain','particles','fog','off'].includes(p.settings.fluidBg)) p.settings.fluidBg = 'aurora'
     if (p.streak === undefined) p.streak = 0
     if (!p.lastPlayDate) p.lastPlayDate = ''
