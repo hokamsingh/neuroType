@@ -35,7 +35,7 @@
   }
 
   $: currentKey    = engine.done ? null : (engine.sequence[engine.index] ?? null)
-  $: if (wordAnnounce) announceKey(currentKey)
+  $: if (wordAnnounce && !engine.done) announceKey(engine.sequence[engine.index] ?? null)
   $: currentKeyDef = currentKey ? getKeyDef(currentKey) : null
   $: targetFinger  = currentKeyDef?.finger ?? null
   $: fingerColor   = targetFinger ? `var(--finger-${targetFinger})` : '#374151'
