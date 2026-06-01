@@ -3,6 +3,7 @@
   import { makeWordQueue, FALL_SPEEDS, SPAWN_RATES } from './words'
   import type { Difficulty } from './words'
   import { sounds } from '../audio/sounds'
+  import { loadProgress } from '../lessons/progress'
 
   export let difficulty: Difficulty = 'medium'
   export let isMobile: boolean = false
@@ -90,6 +91,20 @@
   let wpmTimer  : ReturnType<typeof setInterval>
 
   $: activeWord = words.filter(w => !w.done)[0] ?? null
+
+  const wordAnnounce = loadProgress().settings.wordAnnounce
+  let lastAnnouncedId: number | null = null
+
+  function announceWord(text: string) {
+    if (typeof speechSynthesis === 'undefined') return
+    speechSynthesis.cancel()
+    speechSynthesis.speak(new SpeechSynthesisUtterance(text))
+  }
+
+  $: if (wordAnnounce && activeWord && activeWord.id !== lastAnnouncedId) {
+    lastAnnouncedId = activeWord.id
+    announceWord(activeWord.text)
+  }
 
   function activeMins() {
     const paused_so_far = paused ? totalPausedMs + (Date.now() - pauseStartTs) : totalPausedMs
@@ -275,6 +290,7 @@
     window.removeEventListener('keydown', onKeyDown)
     clearInterval(spawnTimer)
     clearInterval(wpmTimer)
+    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
   })
 
   // ── Speedometer ───────────────────────────────────────────
